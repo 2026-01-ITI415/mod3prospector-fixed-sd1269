@@ -202,6 +202,30 @@ public class Prospector : MonoBehaviour
         }
     }
 
+    bool HasUnplayedCardAboveInSameStack(CardProspector cp)
+    {
+        int thisRow = int.Parse(cp.layoutSlot.layer[cp.layoutSlot.layer.Length - 1].ToString());
+
+        foreach (CardProspector other in mine)
+        {
+            if (other == cp) continue;
+
+            int otherRow = int.Parse(other.layoutSlot.layer[other.layoutSlot.layer.Length - 1].ToString());
+
+            // Same stack = same x position
+            // Directly above = row number exactly 1 higher
+            if (Mathf.Approximately(other.layoutSlot.x, cp.layoutSlot.x) && otherRow == thisRow + 1)
+            {
+                if (other.state == eCardState.mine)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// This turns cards in the Mine face-up and face-down
     /// </summary>
@@ -244,6 +268,8 @@ public class Prospector : MonoBehaviour
         // Check for remaining valid plays
         foreach (CardProspector cp in mine)
         {
+            if (HasUnplayedCardAboveInSameStack(cp)) continue;
+
             // If there is a valid play, the game’s not over
             if (target.AdjacentTo(cp)) return;
         }
@@ -301,6 +327,10 @@ public class Prospector : MonoBehaviour
 
                 // If the card is face-down, it’s not valid
                 if (!cp.faceUp) validMatch = false;
+
+                // If the card directly above it in the same stack
+                // is still unplayed, block this card
+                if (S.HasUnplayedCardAboveInSameStack(cp)) validMatch = false;
 
                 // If it’s not an adjacent rank, it’s not valid
                 if (!cp.AdjacentTo(S.target)) validMatch = false;            // b
